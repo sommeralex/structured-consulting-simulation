@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulation: Berater-Sourcing (Business Case)</title>
+    <style>
+        :root {
+            --color-employee-seeking: #333;
+            --color-employee-partial: #a9d18e;
+            --color-employee-satisfied: #4CAF50;
+            --color-consultant: #808080;
+            --color-analyst: #007bff;
+            --color-bg: #f4f4f4;
+            --color-border: #ccc;
+            --color-text: #222;
+            --color-cost: #d9534f;
+            --color-canvas-bg: #fdfdfd;
+            --color-box-bg: #fff;
+        }
+
+        [data-theme="dark"] {
+            --color-employee-seeking: #e0e0e0;
+            --color-employee-partial: #90c46d;
+            --color-employee-satisfied: #66bb6a;
+            --color-consultant: #b0b0b0;
+            --color-analyst: #64b5f6;
+            --color-bg: #1a1a1a;
+            --color-border: #444;
+            --color-text: #e0e0e0;
+            --color-cost: #ef5350;
+            --color-canvas-bg: #2a2a2a;
+            --color-box-bg: #252525;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .container {
+            width: 95%;
+            max-width: 1300px;
+        }
+        
+        .header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            color: var(--color-text);
+            font-weight: 300;
+            text-align: left;
+            margin: 0;
+        }
+        
+        .lang-switcher {
+            display: flex;
+            gap: 5px;
+        }
+
+        .lang-switcher button, .theme-toggle {
+            background-color: #ccc;
+            color: #333;
+            border: none;
+            padding: 8px 12px;
+            font-size: 0.9em;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .lang-switcher button:hover, .theme-toggle:hover {
+            background-color: #bbb;
+        }
+        .lang-switcher button.active {
+            background-color: var(--color-analyst);
+            color: white;
+        }
+
+        .theme-toggle {
+            margin-left: 10px;
+        }
+
+        [data-theme="dark"] .theme-toggle {
+            background-color: #444;
+            color: #e0e0e0;
+        }
+
+        [data-theme="dark"] .theme-toggle:hover {
+            background-color: #555;
+        }
+        
+        .intro-text {
+            font-size: 1.1em;
+            font-weight: 300;
+            text-align: left;
+            max-width: 1200px;
+            margin: 15px 0 25px 0;
+        }
+
+        .scenario-controls {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .scenario-controls button {
+            background-color: #6c757d;
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            font-size: 0.9em;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .scenario-controls button:hover {
+            background-color: #5a6268;
+        }
+        .scenario-controls button.active {
+            background-color: var(--color-analyst);
+        }
+        /* Gescopte Regel für "Individuell"-Button, wenn aktiv */
+        .scenario-controls button#btn-individuell.active {
+            background-color: #5cb85c; /* Grün für "custom" */
+        }
+
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 15px 20px;
+            background-color: var(--color-box-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 150px;
+            flex: 1; 
+        }
+
+        .control-group label {
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+        }
+
+        .control-group span {
+            font-size: 0.9em;
+            background-color: var(--color-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-top: 5px;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        button#resetButton {
+            background-color: var(--color-cost);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1em;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            height: 40px;
+        }
+
+        button#resetButton:hover {
+            background-color: #c9302c;
+        }
+
+        .day-counter {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--color-text);
+            padding: 10px 15px;
+            background-color: var(--color-bg);
+            border-radius: 6px;
+            min-width: 150px;
+            text-align: center;
+        }
+
+        .simulation-area {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            gap: 20px;
+        }
+
+        .simulation-box {
+            flex: 1;
+            background-color: var(--color-box-bg);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 15px;
+            min-width: 300px;
+            box-sizing: border-box;
+        }
+
+        .simulation-box h2 {
+            text-align: center;
+            margin-top: 0;
+            font-weight: 400;
+        }
+
+        canvas {
+            width: 100%;
+            height: 400px;
+            background-color: var(--color-canvas-bg);
+            border-radius: 4px;
+        }
+
+        .cost-counter {
+            font-size: 2.5em;
+            font-weight: 700;
+            text-align: center;
+            color: var(--color-cost);
+            margin-top: 10px;
+            padding: 10px;
+            background-color: var(--color-bg);
+            border-radius: 6px;
+            position: relative;
+        }
+
+        .cost-counter.winning {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        [data-theme="dark"] .cost-counter.winning {
+            background-color: #1e4620;
+            color: #7cdb84;
+        }
+
+        .savings-indicator {
+            font-size: 0.5em;
+            display: block;
+            margin-top: 5px;
+            font-weight: 500;
+        }
+        
+        .stats-counter {
+            text-align: center;
+            font-size: 0.95em;
+            color: #555;
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .stats-counter span {
+            display: block;
+        }
+        
+        .stats-counter strong {
+            color: var(--color-text);
+            font-weight: 700;
+            font-size: 1.1em;
+            margin-left: 5px;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px 20px;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* --- CSS für Legenden-Formen (Barrierefreiheit) --- */
+        .legend-item svg {
+            width: 15px;
+            height: 15px;
+            stroke: #555;
+            stroke-width: 1;
+        }
+        /* --- Ende CSS-Block --- */
+
+        
+        .explanations {
+            background-color: var(--color-box-bg);
+            padding: 20px 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-top: 30px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .explanations h2 {
+            font-weight: 400;
+            margin-top: 0;
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: 10px;
+        }
+        
+        .explanations p {
+            margin: 10px 0 15px;
+            line-height: 1.6;
+        }
+        
+        .explanations strong {
+            color: var(--color-text);
+            font-weight: 600;
+        }
+        
+        footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #777;
+        }
+        
+        footer a {
+            color: var(--color-analyst);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        footer a:hover {
+            text-decoration: underline;
+        }
+        
+        /* --- Responsivität --- */
+        @media (max-width: 900px) {
+            .simulation-area {
+                flex-direction: column;
+            }
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            .lang-switcher {
+                align-self: flex-end;
+            }
+            h1 {
+                font-size: 1.8em;
+            }
+            .intro-text {
+                font-size: 1em;
+            }
+        }
+        
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <div class="header">
+            <h1 data-lang-key="mainTitle">Simulation: Wertschöpfung durch koordinierte Beratung</h1>
+            <div class="lang-switcher">
+                <button id="btn-de">DE</button>
+                <button id="btn-en">EN</button>
+                <button class="theme-toggle" id="theme-toggle">🌙 Dark</button>
+            </div>
+        </div>
+
+        <p class="intro-text" data-lang-key="introText">
+            Diese Simulation visualisiert den finanziellen Unterschied zwischen unkoordinierten ("Status Quo") und koordinierten ("mit Analysten") Anfragen an externe Berater. Sie zeigt, wie eine zentrale Investition in Analysten-Services (z.B. Gartner, Forrester) die Anzahl teurer Spezialisten-Kontakte reduziert und so zu signifikanten Einsparungen führt.
+        </p>
+
+        <div class="scenario-controls">
+            <button id="btn-konservativ" data-lang-key="btnKonservativ">Szenario: Konservativ</button>
+            <button id="btn-realistisch" data-lang-key="btnRealistisch">Szenario: Realistisch</button>
+            <button id="btn-aggressiv" data-lang-key="btnAggressiv">Szenario: Aggressiv</button>
+            <button id="btn-individuell" data-lang-key="btnIndividuell">Szenario: Individuell</button>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="numParticles" data-lang-key="labelNumParticles">Mitarbeiter (Anfragen)</label>
+                <input type="range" id="numParticles" min="10" max="200" value="70">
+                <span id="numParticlesValue">70</span>
+            </div>
+            <div class="control-group">
+                <label for="speed" data-lang-key="labelSpeed">Dynamik (Geschw.)</label>
+                <input type="range" id="speed" min="0.5" max="5" value="1.5" step="0.1">
+                <span id="speedValue">1.5</span>
+            </div>
+            <div class="control-group">
+                <label for="costFull" data-lang-key="labelCostFull">Kosten pro Tag (Spezialist)</label>
+                <input type="range" id="costFull" min="500" max="3000" value="1500" step="100">
+                <span id="costFullValue">1500</span>
+            </div>
+            <div class="control-group">
+                <label for="costReduced" data-lang-key="labelCostReduced">Zeitreduktion durch Analysten (%)</label>
+                <input type="range" id="costReduced" min="0.2" max="0.8" value="0.3" step="0.05">
+                <span id="costReducedValue">30%</span>
+            </div>
+            <div class="control-group">
+                <label for="costAnnual" data-lang-key="labelCostAnnual">Jährl. Fixkosten (Abo)</label>
+                <input type="range" id="costAnnual" min="1000" max="250000" value="170000" step="1000">
+                <span id="costAnnualValue">170000</span>
+            </div>
+            <div class="control-group">
+                <label for="analystRate" data-lang-key="labelAnalystRate">Voll-Info-Rate (Analyst)</label>
+                <input type="range" id="analystRate" min="0.1" max="1.0" value="0.7" step="0.05">
+                <span id="analystRateValue">70%</span>
+            </div>
+            <div class="control-group">
+                <label for="highPotentialRate" data-lang-key="labelHighPotentialRate">Anteil High-Potentials (%)</label>
+                <input type="range" id="highPotentialRate" min="0.0" max="0.5" value="0.2" step="0.05">
+                <span id="highPotentialRateValue">20%</span>
+            </div>
+            <div class="control-group">
+                <label for="avgEmployeeCost" data-lang-key="labelAvgEmployeeCost">Ø Mitarbeiterkosten/Tag (€)</label>
+                <input type="range" id="avgEmployeeCost" min="200" max="1000" value="600" step="50">
+                <span id="avgEmployeeCostValue">600</span>
+            </div>
+            <div class="control-group">
+                <label for="maxAnalystContacts" data-lang-key="labelMaxAnalystContacts">Max. Analysten-Kontakte/Jahr</label>
+                <input type="range" id="maxAnalystContacts" min="10" max="365" value="100" step="5">
+                <span id="maxAnalystContactsValue">100</span>
+            </div>
+            <div class="day-counter" id="dayCounter" data-lang-key="labelDayCounter">Simulationstag: 0</div>
+            <div class="control-group">
+                <label for="structuringRate" data-lang-key="labelStructuringRate">Strukturierungs-Grad</label>
+                <input type="range" id="structuringRate" min="0.0" max="1.0" value="0.5" step="0.05">
+                <span id="structuringRateValue">50%</span>
+            </div>
+            <button id="resetButton" data-lang-key="btnReset">Simulation Starten / Reset</button>
+        </div>
+
+        <div class="simulation-area">
+            <div class="simulation-box">
+                <h2 data-lang-key="titleUncoordinated">Modell: Unkoordiniert (Status Quo)</h2>
+                <canvas id="canvas-uncoordinated"></canvas>
+                <div class="cost-counter" id="cost-uncoordinated">€ 0</div>
+                <div class="stats-counter">
+                    <span><span data-lang-key="labelSpecialistContacts">Spezialisten-Kontakte</span>:<strong id="consult-uncoordinated">0</strong></span>
+                </div>
+                <div class="legend">
+                    <div class="legend-item">
+                        <svg viewBox="0 0 15 15"><circle cx="7.5" cy="7.5" r="6" fill="var(--color-employee-seeking)" stroke="#000" stroke-width="2"/></svg>
+                        <span data-lang-key="legendSeeking">Mitarbeiter sucht Wissen (Kreis)</span>
+                    </div>
+                    <div class="legend-item">
+                        <svg viewBox="0 0 15 15"><circle cx="7.5" cy="7.5" r="4" fill="var(--color-employee-seeking)" stroke="#000" stroke-width="2"/></svg>
+                        <span data-lang-key="legendHighPotential">High-Potential (kleiner Kreis)</span>
+                    </div>
+                    <div class="legend-item">
+                        <svg viewBox="0 0 15 15"><rect x="1.5" y="1.5" width="12" height="12" fill="var(--color-consultant)"/></svg>
+                        <span data-lang-key="legendSpecialist">Spezialist/Berater (Viereck)</span>
+                    </div>
+                    <div class="legend-item">
+                        <svg viewBox="0 0 15 15"><circle cx="7.5" cy="7.5" r="6" fill="var(--color-employee-satisfied)" stroke="#2d6930" stroke-width="3"/></svg>
+                        <span data-lang-key="legendSatisfied">Wissen erhalten (Kreis, dick umrandet)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="simulation-box">
+                <h2 data-lang-key="titleCoordinated">Modell: Koordiniert (mit Analysten)</h2>
+                <canvas id="canvas-coordinated"></canvas>
+                <div class="cost-counter" id="cost-coordinated">€ 0</div>
+                <div class="stats-counter">
+                    <span><span data-lang-key="labelAnalystContacts">Analysten-Kontakte</span>:<strong id="consult-analyst">0</strong></span>
+                    <span><span data-lang-key="labelSpecialistContacts">Spezialisten-Kontakte</span>:<strong id="consult-specialist">0</strong></span>
+                    <span><span data-lang-key="labelRemainingContacts">Verbleibende Kontakte</span>:<strong id="remaining-contacts">100</strong></span>
+                </div>
+                <div class="legend">
+                    <div class="legend-item">
+                        <svg viewBox="0 0 15 15"><circle cx="7.5" cy="7.5" r="6" fill="var(--color-employee-seeking)" stroke="#000" stroke-width="2"/></svg>
+                        <span data-lang-key="legendSeeking">Mitarbeiter sucht Wissen (Kreis)</span>
+                    </div>
+                    <div class="legend-item">
+                        <svg viewBox="0 0 15 15"><circle cx="7.5" cy="7.5" r="4" fill="var(--color-employee-seeking)" stroke="#000" stroke-width="2"/></svg>
+                        <span data-lang-key="legendHighPotential">High-Potential (kleiner Kreis)</span>
+                    </div>
+                    <div class="legend-item">
+                        <svg viewBox="0 0 15 15"><polygon points="7.5,1.5 13.5,13.5 1.5,13.5" fill="var(--color-analyst)"/></svg>
+                        <span data-lang-key="legendAnalyst">Analyst (Dreieck)</span>
+                    </div>
+                    <div class="legend-item">
+                        <svg viewBox="0 0 15 15"><circle cx="7.5" cy="7.5" r="6" fill="var(--color-employee-partial)" stroke="#5a8a3a" stroke-width="2.5" stroke-dasharray="4,2"/></svg>
+                        <span data-lang-key="legendPartial">Teilwissen erhalten (Kreis, gestrichelt)</span>
+                    </div>
+                     <div class="legend-item">
+                        <svg viewBox="0 0 15 15"><rect x="1.5" y="1.5" width="12" height="12" fill="var(--color-consultant)"/></svg>
+                        <span data-lang-key="legendSpecialist">Spezialist/Berater (Viereck)</span>
+                    </div>
+                    <div class="legend-item">
+                        <svg viewBox="0 0 15 15"><circle cx="7.5" cy="7.5" r="6" fill="var(--color-employee-satisfied)" stroke="#2d6930" stroke-width="3"/></svg>
+                        <span data-lang-key="legendSatisfied">Wissen erhalten (Kreis, dick umrandet)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="explanations">
+            <h2 data-lang-key="titleBusinessCase">Business Case: Warum Gartner, Forrester & IDC?</h2>
+            <p data-lang-key="businessCaseText">Diese Simulation demonstriert den Wert von Analyst-Relations-Abonnements mit festem Jahrespreis. Im Gegensatz zu variablen Beratungskosten bieten Dienste wie Gartner, Forrester und IDC: <strong>1) Unbegrenzte Anfragen</strong> zu einem vorhersehbaren Fixpreis, <strong>2) Selbstbedienungs-Research-Portale</strong> die High-Potentials eigenständig nutzen können, <strong>3) Strukturiertes Wissen</strong> das Projekte vorqualifiziert und verkürzt. Der Break-Even tritt ein, wenn die vermiedenen Spezialistenkosten die Jahresgebühr übersteigen – typischerweise nach 1-3 verhinderten Großprojekten.</p>
+        </div>
+
+        <div class="explanations">
+            <h2 data-lang-key="titleExplanations">Erläuterung der Parameter</h2>
+            <p><strong data-lang-key="expNumParticlesTitle">Mitarbeiter (Anfragen/Jahr):</strong> <span data-lang-key="expNumParticlesText">Repräsentiert die Anzahl der Mitarbeiter, die jährlich externes Beratungswissen benötigen. Jeder Mitarbeiter kann unterschiedliche Seniorität und Wissensbedürfnisse haben. Mehr Mitarbeiter führen zu mehr potenziellen Beraterkontakten und höheren Kosten.</span></p>
+            <p><strong data-lang-key="expSpeedTitle">Simulationsgeschwindigkeit:</strong> <span data-lang-key="expSpeedText">Steuert wie schnell die Simulation läuft. Höhere Werte lassen Tage schneller vergehen und beschleunigen Interaktionen, sodass langfristige Kostenunterschiede schneller sichtbar werden.</span></p>
+            <p><strong data-lang-key="expCostFullTitle">Tagessatz Spezialist (€):</strong> <span data-lang-key="expCostFullText">Der durchschnittliche Tagessatz externer Spezialisten-Berater. Die Simulation modelliert realistische Projektdauern (1-30 Tage) zur Berechnung variabler Projektkosten. Dies repräsentiert ungefilterte, direkte Spezialistenbeauftragungen.</span></p>
+            <p><strong data-lang-key="expCostReducedTitle">Reduzierter Tagessatz (€):</strong> <span data-lang-key="expCostReducedText">Der reduzierte Tagessatz, wenn ein Mitarbeiter bereits Grundwissen aus Analystenberichten hat. Diese Mitarbeiter benötigen nur kurze, spezifische Klärungen (1-3 Tage), was zu deutlich niedrigeren Kosten führt.</span></p>
+            <p><strong data-lang-key="expCostAnnualTitle">Jahresabonnement (€):</strong> <span data-lang-key="expCostAnnualText">Die jährliche Fixinvestition für Analystendienste (z.B. Gartner, Forrester, IDC). Diese Kosten fallen einmal pro Simulationsjahr (365 Tage) an, unabhängig von der Nutzung, wie bei realen Abonnementmodellen. Dies repräsentiert den Business Case für zentrale Wissensdienste.</span></p>
+            <p><strong data-lang-key="expAnalystRateTitle">Analyst Erfolgsrate:</strong> <span data-lang-key="expAnalystRateText">Die Wahrscheinlichkeit, dass eine Analystenanfrage die Frage eines Mitarbeiters vollständig beantwortet, ohne dass ein Spezialist benötigt wird. Höhere Raten zeigen bessere Analystenabdeckung und Forschungsqualität, wodurch teurere Beauftragungen eliminiert werden.</span></p>
+            <p><strong data-lang-key="expStructuringRateTitle">Prozess-Akzeptanzrate:</strong> <span data-lang-key="expStructuringRateText">Der wichtigste Change-Management-Faktor. Repräsentiert welcher Prozentsatz der Mitarbeiter den vorgeschriebenen Prozess befolgt und zuerst Analysten konsultiert. Der Rest repräsentiert 'Rogue Spending' - Mitarbeiter, die den Prozess umgehen und direkt zu teuren Spezialisten gehen.</span></p>
+            <p><strong data-lang-key="expHighPotentialRateTitle">High-Potentials (junge, lernbegierige MA):</strong> <span data-lang-key="expHighPotentialRateText">Anteil jüngerer, wissbegieriger Mitarbeiter. MONETARISIERUNG: Im unkoordinierten Szenario verschwenden sie 1-3 Tage mit Google-Suche (Kosten = Mitarbeitergehalt × Zeit). Im koordinierten Szenario nutzen 70% Self-Service-Portale (0.5-1 Tag), sparen 50-75% Zeitkosten. Sie generieren den höchsten ROI durch eigenständige Nutzung von Gartner/Forrester-Research. Visualisiert als kleinere Kreise.</span></p>
+            <p><strong data-lang-key="expAvgEmployeeCostTitle">Ø Mitarbeiterkosten/Tag (€):</strong> <span data-lang-key="expAvgEmployeeCostText">Durchschnittliche Kosten pro Mitarbeiter pro Tag (Gehalt + Gemeinkosten, ca. 200-1000€/Tag). Kritischer Faktor für Opportunitätskosten: Jeder Tag, den Mitarbeiter mit ineffizienter Recherche verschwenden, kostet diesen Betrag. High-Potentials mit Analyst-Zugang sparen 1-2.5 Tage pro Anfrage = direkt monetarisierbarer Produktivitätsgewinn.</span></p>
+        </div>
+
+        <footer>
+            <p>
+                <span data-lang-key="footerPrompt">prompted by alexander sommer, 2025</span> | 
+                <a href="https://www.linkedin.com/in/sommeralex1982/" target="_blank" rel="noopener noreferrer" data-lang-key="footerLink">LinkedIn Kontakt</a>
+            </p>
+        </footer>
+        
+    </div> <script>
+        // --- Globale Sprach-Variable ---
+        let currentLang = 'en';
+        
+        // --- Übersetzungs-Objekt ---
+        const translations = {
+            de: {
+                mainTitle: "Simulation: Wertschöpfung durch koordinierte Beratung",
+                introText: "Diese Simulation visualisiert den finanziellen Unterschied zwischen unkoordinierten (\"Status Quo\") und koordinierten (\"mit Analysten\") Anfragen an externe Berater. Sie zeigt, wie eine zentrale Investition in Analysten-Services (z.B. Gartner, Forrester) die Anzahl teurer Spezialisten-Kontakte reduziert und so zu signifikanten Einsparungen führt.",
+                btnKonservativ: "Szenario: Konservativ",
+                btnRealistisch: "Szenario: Realistisch",
+                btnAggressiv: "Szenario: Aggressiv",
+                btnIndividuell: "Szenario: Individuell",
+                labelNumParticles: "Mitarbeiter (Anfragen/Jahr)",
+                labelSpeed: "Simulationsgeschwindigkeit",
+                labelCostFull: "Tagessatz Spezialist (€)",
+                labelCostReduced: "Zeitreduktion durch Analysten (%)",
+                labelCostAnnual: "Jahresabo Analysten (Gartner/Forrester/IDC) (€)",
+                labelAnalystRate: "Analyst Erfolgsrate (Vollständige Lösung)",
+                labelStructuringRate: "Prozess-Akzeptanzrate (% folgen Prozess)",
+                labelHighPotentialRate: "High-Potentials (junge, lernbegierige MA)",
+                labelAvgEmployeeCost: "Ø Mitarbeiterkosten/Tag (€)",
+                labelMaxAnalystContacts: "Max. Analysten-Kontakte/Jahr",
+                labelDayCounter: "Simulationstag:",
+                btnReset: "Simulation Starten / Reset",
+                titleUncoordinated: "Modell: Unkoordiniert (Status Quo)",
+                titleCoordinated: "Modell: Koordiniert (mit Analysten)",
+                labelSpecialistContacts: "Spezialisten-Kontakte",
+                labelAnalystContacts: "Analysten-Kontakte",
+                labelRemainingContacts: "Verbleibende Kontakte",
+                legendSeeking: "Mitarbeiter sucht Wissen (Kreis)",
+                legendSpecialist: "Spezialist/Berater (Viereck)",
+                legendSatisfied: "Wissen erhalten (Kreis, dick umrandet)",
+                legendAnalyst: "Analyst (Dreieck)",
+                legendPartial: "Teilwissen erhalten (Kreis, gestrichelt)",
+                legendHighPotential: "High-Potential (kleiner Kreis)",
+                titleBusinessCase: "Business Case: Warum Gartner, Forrester & IDC?",
+                businessCaseText: "Diese Simulation demonstriert den Wert von Analyst-Relations-Abonnements mit festem Jahrespreis. Im Gegensatz zu variablen Beratungskosten bieten Dienste wie Gartner, Forrester und IDC: <strong>1) Unbegrenzte Anfragen</strong> zu einem vorhersehbaren Fixpreis, <strong>2) Selbstbedienungs-Research-Portale</strong> die High-Potentials eigenständig nutzen können, <strong>3) Strukturiertes Wissen</strong> das Projekte vorqualifiziert und verkürzt. Der Break-Even tritt ein, wenn die vermiedenen Spezialistenkosten die Jahresgebühr übersteigen – typischerweise nach 1-3 verhinderten Großprojekten.",
+                titleExplanations: "Erläuterung der Parameter",
+                expNumParticlesTitle: "Mitarbeiter (Anfragen/Jahr):",
+                expNumParticlesText: "Repräsentiert die Anzahl der Mitarbeiter, die jährlich externes Beratungswissen benötigen. Jeder Mitarbeiter kann unterschiedliche Seniorität und Wissensbedürfnisse haben. Mehr Mitarbeiter führen zu mehr potenziellen Beraterkontakten und höheren Kosten.",
+                expSpeedTitle: "Simulationsgeschwindigkeit:",
+                expSpeedText: "Steuert wie schnell die Simulation läuft. Höhere Werte lassen Tage schneller vergehen und beschleunigen Interaktionen, sodass langfristige Kostenunterschiede schneller sichtbar werden.",
+                expCostFullTitle: "Tagessatz Spezialist (€):",
+                expCostFullText: "Der durchschnittliche Tagessatz externer Spezialisten-Berater. Die Simulation modelliert realistische Projektdauern (1-30 Tage) zur Berechnung variabler Projektkosten. Dies repräsentiert ungefilterte, direkte Spezialistenbeauftragungen.",
+                expCostReducedTitle: "Zeitreduktion durch Analysten (%):",
+                expCostReducedText: "Der Prozentsatz, um den die benötigte Beratungszeit durch Analysten-Vorarbeit (Gartner/Forrester/IDC) reduziert wird. Wenn ein Mitarbeiter bereits Research-Berichte gelesen hat, verkürzt sich die notwendige Spezialistenzeit um 20-80%. Der Tagessatz bleibt gleich, aber die Projektdauer sinkt erheblich.",
+                expCostAnnualTitle: "Jahresabo Analysten (Gartner/Forrester/IDC) (€):",
+                expCostAnnualText: "Die jährliche Fixinvestition für Analystenabonnements wie Gartner, Forrester oder IDC. Diese Kosten fallen einmal pro Simulationsjahr (365 Tage) an, unabhängig von der Nutzung. Im Gegensatz zu variablen Beratungskosten bietet dies planbare Fixkosten mit unbegrenzten Anfragen und Zugang zu Research-Portalen.",
+                expAnalystRateTitle: "Analyst Erfolgsrate:",
+                expAnalystRateText: "Die Wahrscheinlichkeit, dass eine Analystenanfrage die Frage eines Mitarbeiters vollständig beantwortet, ohne dass ein Spezialist benötigt wird. Höhere Raten zeigen bessere Analystenabdeckung und Forschungsqualität, wodurch teurere Beauftragungen eliminiert werden.",
+                expStructuringRateTitle: "Prozess-Akzeptanzrate:",
+                expStructuringRateText: "Der wichtigste Change-Management-Faktor. Repräsentiert welcher Prozentsatz der Mitarbeiter den vorgeschriebenen Prozess befolgt und zuerst Analysten konsultiert. Der Rest repräsentiert 'Rogue Spending' - Mitarbeiter, die den Prozess umgehen und direkt zu teuren Spezialisten gehen.",
+                expHighPotentialRateTitle: "High-Potentials (junge, lernbegierige MA):",
+                expHighPotentialRateText: "Anteil jüngerer, wissbegieriger Mitarbeiter. MONETARISIERUNG: Im unkoordinierten Szenario verschwenden sie 1-3 Tage mit Google-Suche (Kosten = Mitarbeitergehalt × Zeit). Im koordinierten Szenario nutzen 70% Self-Service-Portale (0.5-1 Tag), sparen 50-75% Zeitkosten. Sie generieren den höchsten ROI durch eigenständige Nutzung von Gartner/Forrester-Research. Visualisiert als kleinere Kreise.",
+                expAvgEmployeeCostTitle: "Ø Mitarbeiterkosten/Tag (€):",
+                expAvgEmployeeCostText: "Durchschnittliche Kosten pro Mitarbeiter pro Tag (Gehalt + Gemeinkosten, ca. 200-1000€/Tag). Kritischer Faktor für Opportunitätskosten: Jeder Tag, den Mitarbeiter mit ineffizienter Recherche verschwenden, kostet diesen Betrag. High-Potentials mit Analyst-Zugang sparen 1-2.5 Tage pro Anfrage = direkt monetarisierbarer Produktivitätsgewinn.",
+                footerPrompt: "prompted by alexander sommer, 2025",
+                footerLink: "LinkedIn Kontakt"
+            },
+            en: {
+                mainTitle: "Simulation: Value Creation through Coordinated Sourcing",
+                introText: "This simulation visualizes the financial difference between uncoordinated ('Status Quo') and coordinated ('with Analysts') requests to external consultants. It shows how a central investment in analyst services (e.g., Gartner, Forrester) reduces the number of expensive specialist contacts, leading to significant savings.",
+                btnKonservativ: "Scenario: Conservative",
+                btnRealistisch: "Scenario: Realistic",
+                btnAggressiv: "Scenario: Aggressive",
+                btnIndividuell: "Scenario: Custom",
+                labelNumParticles: "Employees (Inquiries/Year)",
+                labelSpeed: "Simulation Speed",
+                labelCostFull: "Specialist Daily Rate (€)",
+                labelCostReduced: "Time Reduction via Analysts (%)",
+                labelCostAnnual: "Annual Analyst Subscription (Gartner/Forrester/IDC) (€)",
+                labelAnalystRate: "Analyst Success Rate (Full Resolution)",
+                labelStructuringRate: "Process Adoption Rate (% following process)",
+                labelHighPotentialRate: "High-Potentials (young, eager learners)",
+                labelAvgEmployeeCost: "Avg. Employee Cost/Day (€)",
+                labelMaxAnalystContacts: "Max. Analyst Contacts/Year",
+                labelDayCounter: "Simulation Day:",
+                btnReset: "Start / Reset Simulation",
+                titleUncoordinated: "Model: Uncoordinated (Status Quo)",
+                titleCoordinated: "Model: Coordinated (with Analysts)",
+                labelSpecialistContacts: "Specialist Contacts",
+                labelAnalystContacts: "Analyst Contacts",
+                labelRemainingContacts: "Remaining Contacts",
+                legendSeeking: "Employee seeking knowledge (Circle)",
+                legendSpecialist: "Specialist/Consultant (Square)",
+                legendSatisfied: "Knowledge gained (Circle, thick border)",
+                legendAnalyst: "Analyst (Triangle)",
+                legendPartial: "Partial knowledge (Circle, dashed)",
+                legendHighPotential: "High-Potential (small circle)",
+                titleBusinessCase: "Business Case: Why Gartner, Forrester & IDC?",
+                businessCaseText: "This simulation demonstrates the value of fixed-price analyst relations subscriptions. Unlike variable consulting costs, services like Gartner, Forrester, and IDC offer: <strong>1) Unlimited inquiries</strong> at a predictable annual price, <strong>2) Self-service research portals</strong> that high-potentials can use independently, <strong>3) Structured knowledge</strong> that pre-qualifies and shortens projects. Break-even occurs when avoided specialist costs exceed the annual fee—typically after preventing just 1-3 large projects.",
+                titleExplanations: "Parameter Explanation",
+                expNumParticlesTitle: "Employees (Inquiries/Year):",
+                expNumParticlesText: "Represents the number of employees seeking external consulting knowledge annually. Each employee may have different seniority levels and knowledge needs. More employees result in more potential consultant contacts and higher costs.",
+                expSpeedTitle: "Simulation Speed:",
+                expSpeedText: "Controls how fast the simulation runs. Higher values make days pass faster and accelerate interactions, allowing you to see long-term cost differences more quickly.",
+                expCostFullTitle: "Specialist Daily Rate (€):",
+                expCostFullText: "The average daily rate charged by external specialist consultants. The simulation models realistic project durations (1-30 days) to calculate variable project costs. This represents unfiltered, direct-to-specialist engagements.",
+                expCostReducedTitle: "Time Reduction via Analysts (%):",
+                expCostReducedText: "The percentage by which required consulting time is reduced through analyst pre-work (Gartner/Forrester/IDC). When employees have already read research reports, the necessary specialist time drops by 20-80%. The daily rate remains the same, but project duration decreases significantly.",
+                expCostAnnualTitle: "Annual Analyst Subscription (Gartner/Forrester/IDC) (€):",
+                expCostAnnualText: "The fixed annual investment for analyst subscriptions like Gartner, Forrester, or IDC. This cost is charged once per simulation year (365 days) regardless of usage. Unlike variable consulting costs, this provides predictable fixed costs with unlimited inquiries and access to research portals.",
+                expAnalystRateTitle: "Analyst Success Rate:",
+                expAnalystRateText: "The probability that an analyst inquiry fully answers an employee's question without requiring any specialist contact. Higher rates indicate better analyst coverage and research quality, eliminating more expensive engagements.",
+                expStructuringRateTitle: "Process Adoption Rate:",
+                expStructuringRateText: "The most critical change management factor. Represents what percentage of employees follow the prescribed process and consult analysts first. The remainder represents 'rogue spending' - employees who bypass the process and go directly to expensive specialists.",
+                expHighPotentialRateTitle: "High-Potentials (young, eager learners):",
+                expHighPotentialRateText: "Share of younger, knowledge-hungry employees. MONETIZATION: In uncoordinated scenario, they waste 1-3 days on Google searches (Cost = Employee salary × Time). In coordinated scenario, 70% use self-service portals (0.5-1 day), saving 50-75% time costs. They generate highest ROI through independent use of Gartner/Forrester research. Visualized as smaller circles.",
+                expAvgEmployeeCostTitle: "Avg. Employee Cost/Day (€):",
+                expAvgEmployeeCostText: "Average cost per employee per day (salary + overhead, approx. 200-1000€/day). Critical factor for opportunity costs: Every day employees waste on inefficient research costs this amount. High-potentials with analyst access save 1-2.5 days per inquiry = directly monetizable productivity gain.",
+                footerPrompt: "prompted by alexander sommer, 2025",
+                footerLink: "LinkedIn Contact"
+            }
+        };
+
+        // --- DOM-Elemente holen ---
+        const canvasUncoordinated = document.getElementById('canvas-uncoordinated');
+        const ctxUncoordinated = canvasUncoordinated.getContext('2d');
+        const canvasCoordinated = document.getElementById('canvas-coordinated');
+        const ctxCoordinated = canvasCoordinated.getContext('2d');
+
+        const costUncoordinatedEl = document.getElementById('cost-uncoordinated');
+        const costCoordinatedEl = document.getElementById('cost-coordinated');
+        const dayCounterEl = document.getElementById('dayCounter');
+        
+        const consultUncoordinatedEl = document.getElementById('consult-uncoordinated');
+        const consultAnalystEl = document.getElementById('consult-analyst');
+        const consultSpecialistEl = document.getElementById('consult-specialist');
+        const remainingContactsEl = document.getElementById('remaining-contacts');
+
+        // --- Slider-Elemente holen ---
+        const numParticlesSlider = document.getElementById('numParticles');
+        const speedSlider = document.getElementById('speed');
+        const costFullSlider = document.getElementById('costFull');
+        const costReducedSlider = document.getElementById('costReduced');
+        const costAnnualSlider = document.getElementById('costAnnual');
+        const analystRateSlider = document.getElementById('analystRate');
+        const structuringRateSlider = document.getElementById('structuringRate');
+        const highPotentialRateSlider = document.getElementById('highPotentialRate');
+        const avgEmployeeCostSlider = document.getElementById('avgEmployeeCost');
+        const maxAnalystContactsSlider = document.getElementById('maxAnalystContacts');
+        const resetButton = document.getElementById('resetButton');
+
+        // --- Slider-Werte-Anzeige-Elemente holen ---
+        const numParticlesValue = document.getElementById('numParticlesValue');
+        const speedValue = document.getElementById('speedValue');
+        const costFullValue = document.getElementById('costFullValue');
+        const costReducedValue = document.getElementById('costReducedValue');
+        const costAnnualValue = document.getElementById('costAnnualValue');
+        const analystRateValue = document.getElementById('analystRateValue');
+        const structuringRateValue = document.getElementById('structuringRateValue');
+        const highPotentialRateValue = document.getElementById('highPotentialRateValue');
+        const avgEmployeeCostValue = document.getElementById('avgEmployeeCostValue');
+        const maxAnalystContactsValue = document.getElementById('maxAnalystContactsValue');
+
+        // --- Button-Elemente holen ---
+        const scenarioButtons = {
+            konservativ: document.getElementById('btn-konservativ'),
+            realistisch: document.getElementById('btn-realistisch'),
+            aggressiv: document.getElementById('btn-aggressiv'),
+            individuell: document.getElementById('btn-individuell') // NEU
+        };
+        const langBtnDE = document.getElementById('btn-de');
+        const langBtnEN = document.getElementById('btn-en');
+
+        // --- Globale Einstellungen ---
+        let settings = {};
+        let particlesUncoordinated = [];
+        let particlesCoordinated = [];
+        
+        let consultantsUncoordinated = [];
+        let consultantsCoordinated = [];
+        let analysts = [];
+        
+        let totalCostUncoordinated = 0;
+        let totalCostCoordinated = 0;
+        let totalInternalCostUncoordinated = 0; // NEW: Internal employee time costs
+        let totalInternalCostCoordinated = 0;   // NEW: Internal employee time costs
+
+        let countConsultUncoordinated = 0;
+        let countConsultAnalyst = 0;
+        let countConsultSpecialist = 0;
+        let countHighPotentialSelfService = 0; // NEW: High-potentials using self-service
+
+        let analystContactsThisYear = 0; // Track analyst contacts per year
+        let currentYear = 0; // Track current simulation year
+
+        let animationFrameId;
+
+        // Zeit-Variablen
+        let simulationDay = 0;
+        let totalElapsedSimTime = 0;
+        let lastFeeYear = -1;
+        const MS_PER_SIM_DAY = 100;
+
+        let lastTime;
+
+        // Konstanten
+        const PARTICLE_RADIUS = 5;
+        const TARGET_RADIUS = 10;
+        const KNOWLEDGE_DURATION_MS = 8000;
+
+        // --- Klassen-Definitionen ---
+        
+        class Particle { // Mitarbeiter (Kreis)
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.respawn();
+            }
+
+            respawn() {
+                this.x = Math.random() * this.canvas.width;
+                this.y = Math.random() * this.canvas.height;
+                this.vx = (Math.random() - 0.5) * settings.speed;
+                this.vy = (Math.random() - 0.5) * settings.speed;
+                this.state = 'seeking';
+                this.satisfactionTimer = 0;
+                this.isHighPotential = (Math.random() < settings.highPotentialRate);
+                this.radius = this.isHighPotential ? PARTICLE_RADIUS * 0.7 : PARTICLE_RADIUS; // Smaller for high-potentials
+                this.followsProcess = (Math.random() < settings.structuringRate);
+                this.targetAnalyst = null; // For structured movement
+                this.researchTimeSpent = 0; // NEW: Track internal time spent researching
+            }
+
+            update(deltaTime, analysts = null) {
+                if (this.state === 'satisfied') {
+                    this.satisfactionTimer -= deltaTime;
+                    if (this.satisfactionTimer <= 0) {
+                        this.respawn();
+                    }
+                    this.x += this.vx * 0.2;
+                    this.y += this.vy * 0.2;
+                } else {
+                    // Structured movement for process-following employees in coordinated model
+                    if (this.followsProcess && analysts && analysts.length > 0 && this.state === 'seeking') {
+                        // Find nearest analyst
+                        if (!this.targetAnalyst) {
+                            this.targetAnalyst = analysts[Math.floor(Math.random() * analysts.length)];
+                        }
+
+                        // Add gentle attraction towards analyst (not too strong)
+                        const dx = this.targetAnalyst.x - this.x;
+                        const dy = this.targetAnalyst.y - this.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (distance > 0) {
+                            const attractionStrength = 0.05 * settings.structuringRate; // Scales with adoption rate
+                            this.vx += (dx / distance) * attractionStrength;
+                            this.vy += (dy / distance) * attractionStrength;
+
+                            // Limit velocity
+                            const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                            const maxSpeed = settings.speed * 2;
+                            if (speed > maxSpeed) {
+                                this.vx = (this.vx / speed) * maxSpeed;
+                                this.vy = (this.vy / speed) * maxSpeed;
+                            }
+                        }
+                    }
+
+                    this.x += this.vx;
+                    this.y += this.vy;
+                }
+
+                if (this.x < this.radius || this.x > this.canvas.width - this.radius) this.vx *= -1;
+                if (this.y < this.radius || this.y > this.canvas.height - this.radius) this.vy *= -1;
+            }
+
+            draw(ctx) {
+                let color, strokeColor, strokeWidth, dashPattern;
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+
+                switch (this.state) {
+                    case 'seeking':
+                        color = isDark ? '#e0e0e0' : '#333';
+                        strokeColor = isDark ? '#fff' : '#000';
+                        strokeWidth = 2;
+                        dashPattern = []; // Solid
+                        break;
+                    case 'partial':
+                        color = isDark ? '#90c46d' : '#a9d18e';
+                        strokeColor = isDark ? '#a8d680' : '#5a8a3a';
+                        strokeWidth = 2.5;
+                        dashPattern = [4, 2]; // Dashed pattern
+                        break;
+                    case 'satisfied':
+                        color = isDark ? '#66bb6a' : '#4CAF50';
+                        strokeColor = isDark ? '#80c783' : '#2d6930';
+                        strokeWidth = 3;
+                        dashPattern = []; // Solid but thicker
+                        break;
+                    default:
+                        color = isDark ? '#e0e0e0' : '#333';
+                        strokeColor = isDark ? '#fff' : '#000';
+                        strokeWidth = 2;
+                        dashPattern = [];
+                }
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = color;
+                ctx.fill();
+
+                // Add distinctive stroke patterns for accessibility
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = strokeWidth;
+                ctx.setLineDash(dashPattern);
+                ctx.stroke();
+                ctx.setLineDash([]); // Reset
+            }
+        }
+
+        class Target { // Ziele (Viereck oder Dreieck)
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.type = type; // 'consultant' or 'analyst'
+                this.radius = TARGET_RADIUS;
+            }
+
+            // --- ANGEPASSTE DRAW-METHODE (ACCESSIBILITY) ---
+            draw(ctx) {
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                ctx.beginPath();
+
+                if (this.type === 'consultant') {
+                    // Spezialist = Viereck (Grau)
+                    ctx.rect(this.x - this.radius / 1.5, this.y - this.radius / 1.5, this.radius * 1.5, this.radius * 1.5);
+                    ctx.fillStyle = isDark ? '#b0b0b0' : '#808080';
+                } else {
+                    // Analyst = Dreieck (Blau)
+                    ctx.moveTo(this.x, this.y - this.radius); // Obere Spitze
+                    ctx.lineTo(this.x + this.radius, this.y + this.radius * 0.7); // Unten rechts
+                    ctx.lineTo(this.x - this.radius, this.y + this.radius * 0.7); // Unten links
+                    ctx.closePath();
+                    ctx.fillStyle = isDark ? '#64b5f6' : '#007bff';
+                }
+
+                ctx.fill();
+            }
+        }
+
+        // --- Hilfsfunktionen ---
+        function getDistance(p1, p2) {
+            const dx = p1.x - p2.x;
+            const dy = p1.y - p2.y;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        function checkCollision(particle, target) {
+            return getDistance(particle, target) < particle.radius + target.radius;
+        }
+
+        function getRandomEngagementCost(baseCostPerDay, type, timeReductionFactor = 0) {
+            let days = 0;
+            if (type === 'full') {
+                const rand = Math.random();
+                if (rand < 0.7) { days = 1 + Math.random() * 4; }
+                else if (rand < 0.9) { days = 5 + Math.random() * 10; }
+                else { days = 15 + Math.random() * 15; }
+            } else {
+                // Type 'reduced': same project but reduced time due to analyst pre-work
+                const rand = Math.random();
+                if (rand < 0.7) { days = 1 + Math.random() * 4; }
+                else if (rand < 0.9) { days = 5 + Math.random() * 10; }
+                else { days = 15 + Math.random() * 15; }
+
+                // Apply time reduction (20-80%)
+                days = days * (1 - timeReductionFactor);
+            }
+            return days * baseCostPerDay;
+        }
+
+        // NEW: Calculate internal research costs (employee time)
+        function getInternalResearchCost(isHighPotential, hasAnalystAccess) {
+            const employeeDailyCost = settings.avgEmployeeCost;
+
+            if (!hasAnalystAccess) {
+                // Uncoordinated: Google search, trial & error
+                // High-potentials are slightly faster, but still inefficient
+                const researchDays = isHighPotential ? 1 + Math.random() * 2 : 2 + Math.random() * 3;
+                return researchDays * employeeDailyCost;
+            } else {
+                // Coordinated with analyst access
+                if (isHighPotential) {
+                    // High-potentials THRIVE with self-service portals
+                    // 70% chance they find answer themselves (0.5-1 day)
+                    // 30% chance they need analyst (0.2-0.5 days to prepare question)
+                    if (Math.random() < 0.7) {
+                        countHighPotentialSelfService++;
+                        return (0.5 + Math.random() * 0.5) * employeeDailyCost; // Self-service: 0.5-1 day
+                    } else {
+                        return (0.2 + Math.random() * 0.3) * employeeDailyCost; // Prep for analyst: 0.2-0.5 days
+                    }
+                } else {
+                    // Regular employees: still need guidance, but faster with portal
+                    return (0.3 + Math.random() * 0.7) * employeeDailyCost; // 0.3-1 day
+                }
+            }
+        }
+        
+        // --- Sprach-Funktion ---
+        function setLanguage(lang) {
+            currentLang = lang;
+            langBtnDE.classList.toggle('active', lang === 'de');
+            langBtnEN.classList.toggle('active', lang === 'en');
+            
+            document.documentElement.lang = lang; // HTML-Tag lang Attribut setzen
+            
+            document.querySelectorAll('[data-lang-key]').forEach(el => {
+                const key = el.dataset.langKey;
+                if (translations[lang] && translations[lang][key]) {
+                    el.innerHTML = translations[lang][key]; 
+                }
+            });
+            
+            updateSliderDisplays();
+            updateDayCounter();
+            updateAllDisplays();
+        }
+
+        // --- Hauptlogik ---
+        
+        function startSimulation() {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            
+            [canvasUncoordinated, canvasCoordinated].forEach(canvas => {
+                const width = canvas.parentElement.clientWidth - 30;
+                const height = 400;
+                canvas.width = width > 0 ? width : 300;
+                canvas.height = height;
+            });
+
+            settings = {
+                numParticles: parseInt(numParticlesSlider.value),
+                speed: parseFloat(speedSlider.value),
+                costFull: parseInt(costFullSlider.value),
+                timeReduction: parseFloat(costReducedSlider.value), // Now represents % time reduction (0.2-0.8)
+                costAnnual: parseInt(costAnnualSlider.value),
+                analystRate: parseFloat(analystRateSlider.value),
+                structuringRate: parseFloat(structuringRateSlider.value),
+                highPotentialRate: parseFloat(highPotentialRateSlider.value),
+                avgEmployeeCost: parseInt(avgEmployeeCostSlider.value),
+                maxAnalystContacts: parseInt(maxAnalystContactsSlider.value)
+            };
+
+            updateSliderDisplays();
+
+            particlesUncoordinated = [];
+            particlesCoordinated = [];
+            consultantsUncoordinated = [];
+            consultantsCoordinated = [];
+            analysts = [];
+            
+            totalCostUncoordinated = 0;
+            totalCostCoordinated = 0;
+            totalInternalCostUncoordinated = 0;
+            totalInternalCostCoordinated = 0;
+            countConsultUncoordinated = 0;
+            countConsultAnalyst = 0;
+            countConsultSpecialist = 0;
+            countHighPotentialSelfService = 0;
+            analystContactsThisYear = 0;
+            currentYear = 0;
+
+            simulationDay = 0;
+            totalElapsedSimTime = 0;
+            lastFeeYear = -1;
+
+            for (let i = 0; i < settings.numParticles; i++) {
+                particlesUncoordinated.push(new Particle(canvasUncoordinated));
+                particlesCoordinated.push(new Particle(canvasCoordinated));
+            }
+
+            const numConsultants = 5;
+            const numAnalysts = 3;
+            
+            for (let i = 0; i < numConsultants; i++) {
+                const angle = (i / numConsultants) * Math.PI * 2;
+                const x = canvasUncoordinated.width / 2 + Math.cos(angle) * (canvasUncoordinated.width * 0.4);
+                const y = canvasUncoordinated.height / 2 + Math.sin(angle) * (canvasUncoordinated.height * 0.4);
+                
+                consultantsUncoordinated.push(new Target(x, y, 'consultant'));
+                consultantsCoordinated.push(new Target(x, y, 'consultant'));
+            }
+            
+            for (let i = 0; i < numAnalysts; i++) {
+                const angle = (i / numAnalysts) * Math.PI * 2;
+                const x = canvasCoordinated.width / 2 + Math.cos(angle) * (canvasCoordinated.width * 0.15);
+                const y = canvasCoordinated.height / 2 + Math.sin(angle) * (canvasCoordinated.height * 0.15);
+                
+                analysts.push(new Target(x, y, 'analyst'));
+            }
+
+            updateAllDisplays();
+            updateDayCounter();
+
+            lastTime = 0; 
+            animate(0);
+        }
+        
+        function updateSliderDisplays() {
+            const locale = currentLang === 'de' ? 'de-DE' : 'en-US';
+            numParticlesValue.textContent = numParticlesSlider.value;
+            speedValue.textContent = parseFloat(speedSlider.value).toFixed(1);
+            costFullValue.textContent = parseInt(costFullSlider.value).toLocaleString(locale);
+            costReducedValue.textContent = `${(parseFloat(costReducedSlider.value) * 100).toFixed(0)}%`;
+            costAnnualValue.textContent = parseInt(costAnnualSlider.value).toLocaleString(locale);
+            analystRateValue.textContent = `${(parseFloat(analystRateSlider.value) * 100).toFixed(0)}%`;
+            structuringRateValue.textContent = `${(parseFloat(structuringRateSlider.value) * 100).toFixed(0)}%`;
+            highPotentialRateValue.textContent = `${(parseFloat(highPotentialRateSlider.value) * 100).toFixed(0)}%`;
+            avgEmployeeCostValue.textContent = parseInt(avgEmployeeCostSlider.value).toLocaleString(locale);
+            maxAnalystContactsValue.textContent = parseInt(maxAnalystContactsSlider.value);
+        }
+        
+        function updateDayCounter() {
+            const year = Math.floor(simulationDay / 365);
+            const day = simulationDay % 365;
+            const yearLabel = currentLang === 'de' ? 'Jahr' : 'Year';
+            const dayLabel = currentLang === 'de' ? 'Tag' : 'Day';
+            dayCounterEl.textContent = `${yearLabel}: ${year} | ${dayLabel}: ${day}`;
+        }
+
+        function loadScenario(preset) {
+            Object.values(scenarioButtons).forEach(btn => btn.classList.remove('active'));
+            
+            const fixedCost = 170000;
+            
+            if (preset === 'konservativ') {
+                numParticlesSlider.value = 70;
+                speedSlider.value = 1.5;
+                costFullSlider.value = 1500;
+                costReducedSlider.value = 0.2; // 20% time reduction
+                costAnnualSlider.value = fixedCost;
+                analystRateSlider.value = 0.3;
+                structuringRateSlider.value = 0.1;
+                avgEmployeeCostSlider.value = 600;
+                scenarioButtons.konservativ.classList.add('active');
+            } else if (preset === 'realistisch') {
+                numParticlesSlider.value = 70;
+                speedSlider.value = 1.5;
+                costFullSlider.value = 1500;
+                costReducedSlider.value = 0.3; // 30% time reduction
+                costAnnualSlider.value = fixedCost;
+                analystRateSlider.value = 0.6;
+                structuringRateSlider.value = 0.5;
+                avgEmployeeCostSlider.value = 600;
+                scenarioButtons.realistisch.classList.add('active');
+            } else if (preset === 'aggressiv') {
+                numParticlesSlider.value = 70;
+                speedSlider.value = 1.5;
+                costFullSlider.value = 2500;
+                costReducedSlider.value = 0.5; // 50% time reduction
+                costAnnualSlider.value = fixedCost;
+                analystRateSlider.value = 0.8;
+                structuringRateSlider.value = 0.7;
+                avgEmployeeCostSlider.value = 600;
+                scenarioButtons.aggressiv.classList.add('active');
+            }
+            // 'individuell' wird nur durch manuelle Slider-Änderung aktiv
+            
+            startSimulation();
+        }
+
+        function updateAllDisplays() {
+            const locale = currentLang === 'de' ? 'de-DE' : 'en-US';
+
+            // TOTAL COST = External + Internal (employee time)
+            const totalUncoordinated = totalCostUncoordinated + totalInternalCostUncoordinated;
+            const totalCoordinated = totalCostCoordinated + totalInternalCostCoordinated;
+
+            costUncoordinatedEl.textContent = `€ ${Math.floor(totalUncoordinated).toLocaleString(locale)}`;
+            costCoordinatedEl.textContent = `€ ${Math.floor(totalCoordinated).toLocaleString(locale)}`;
+
+            consultUncoordinatedEl.textContent = countConsultUncoordinated.toLocaleString(locale);
+            consultAnalystEl.textContent = countConsultAnalyst.toLocaleString(locale);
+            consultSpecialistEl.textContent = countConsultSpecialist.toLocaleString(locale);
+
+            // Update remaining analyst contacts for this year
+            const remainingContacts = settings.maxAnalystContacts - analystContactsThisYear;
+            remainingContactsEl.textContent = remainingContacts.toLocaleString(locale);
+
+            // Visual indicator for which approach is winning
+            if (simulationDay > 100) { // Only show after some simulation time
+                costUncoordinatedEl.classList.toggle('winning', totalUncoordinated < totalCoordinated);
+                costCoordinatedEl.classList.toggle('winning', totalCoordinated < totalUncoordinated);
+            }
+        }
+
+        // Die Haupt-Animationsschleife
+        function animate(timestamp) {
+            const deltaTime = timestamp - (lastTime || timestamp);
+            lastTime = timestamp;
+
+            // 1. Zeit aktualisieren
+            totalElapsedSimTime += deltaTime;
+            const newDay = Math.floor(totalElapsedSimTime / MS_PER_SIM_DAY);
+            if (newDay > simulationDay) {
+                simulationDay = newDay;
+                updateDayCounter();
+            }
+            
+            // 2. Jährliche Fixkosten prüfen und Jahr-Reset für Analyst-Kontakte
+            const simulationYear = Math.floor(simulationDay / 365);
+            if (simulationYear > currentYear) {
+                // New year started - reset analyst contacts counter
+                analystContactsThisYear = 0;
+                currentYear = simulationYear;
+            }
+            if (simulationYear > lastFeeYear) {
+                totalCostCoordinated += settings.costAnnual;
+                lastFeeYear = simulationYear;
+                updateAllDisplays();
+            }
+
+            // 3. Canvas leeren
+            ctxUncoordinated.clearRect(0, 0, canvasUncoordinated.width, canvasUncoordinated.height);
+            ctxCoordinated.clearRect(0, 0, canvasCoordinated.width, canvasCoordinated.height);
+
+            // 4. Ziele zeichnen
+            consultantsUncoordinated.forEach(c => c.draw(ctxUncoordinated));
+            consultantsCoordinated.forEach(c => c.draw(ctxCoordinated));
+            analysts.forEach(a => a.draw(ctxCoordinated));
+
+            // 5. Simulationslogik "Unkoordiniert"
+            particlesUncoordinated.forEach(p => {
+                p.update(deltaTime);
+                if (p.state === 'seeking') {
+                    for (const consultant of consultantsUncoordinated) {
+                        if (checkCollision(p, consultant)) {
+                            p.state = 'satisfied';
+                            p.satisfactionTimer = KNOWLEDGE_DURATION_MS;
+
+                            // External consultant costs
+                            totalCostUncoordinated += getRandomEngagementCost(settings.costFull, 'full');
+                            countConsultUncoordinated++;
+
+                            // Internal research costs (wasted employee time without proper tools)
+                            totalInternalCostUncoordinated += getInternalResearchCost(p.isHighPotential, false);
+
+                            updateAllDisplays();
+                            break;
+                        }
+                    }
+                }
+                p.draw(ctxUncoordinated);
+            });
+
+            // 6. Simulationslogik "Koordiniert"
+            particlesCoordinated.forEach(p => {
+                p.update(deltaTime, analysts);
+
+                if (p.state === 'seeking') {
+                    if (p.followsProcess) {
+                        // FALL 1: Prozess-treu -> Sucht Analyst (Dreieck)
+                        // Check if we've reached the analyst contact limit for this year
+                        if (analystContactsThisYear < settings.maxAnalystContacts) {
+                            for (const analyst of analysts) {
+                                if (checkCollision(p, analyst)) {
+                                    countConsultAnalyst++;
+                                    analystContactsThisYear++;
+
+                                    // Internal research cost (with analyst access - much more efficient!)
+                                    totalInternalCostCoordinated += getInternalResearchCost(p.isHighPotential, true);
+
+                                    // High-potentials have higher success rate with analysts (they read the docs!)
+                                    const effectiveRate = p.isHighPotential
+                                        ? Math.min(0.95, settings.analystRate + 0.2)
+                                        : settings.analystRate;
+
+                                    if (Math.random() < effectiveRate) {
+                                        p.state = 'satisfied';
+                                        p.satisfactionTimer = KNOWLEDGE_DURATION_MS;
+                                    } else {
+                                        p.state = 'partial';
+                                    }
+                                    updateAllDisplays();
+                                    break;
+                                }
+                            }
+                        }
+                    } else {
+                        // FALL 2: Prozess-untreu -> Sucht Spezialist (Viereck) - Rogue spending
+                        for (const consultant of consultantsCoordinated) {
+                            if (checkCollision(p, consultant)) {
+                                p.state = 'satisfied';
+                                p.satisfactionTimer = KNOWLEDGE_DURATION_MS;
+
+                                // External costs (full rate)
+                                totalCostCoordinated += getRandomEngagementCost(settings.costFull, 'full');
+                                countConsultSpecialist++;
+
+                                // Internal costs (no analyst access used - wasteful)
+                                totalInternalCostCoordinated += getInternalResearchCost(p.isHighPotential, false);
+
+                                updateAllDisplays();
+                                break;
+                            }
+                        }
+                    }
+                } else if (p.state === 'partial') {
+                    // FALL 3: Teil-informiert -> Sucht Spezialist (Viereck) mit reduzierter Zeit
+                    for (const consultant of consultantsCoordinated) {
+                        if (checkCollision(p, consultant)) {
+                            p.state = 'satisfied';
+                            p.satisfactionTimer = KNOWLEDGE_DURATION_MS;
+
+                            // External costs (reduced time thanks to analyst pre-work)
+                            totalCostCoordinated += getRandomEngagementCost(settings.costFull, 'reduced', settings.timeReduction);
+                            countConsultSpecialist++;
+
+                            // Internal costs already accounted for in FALL 1 (analyst contact)
+
+                            updateAllDisplays();
+                            break;
+                        }
+                    }
+                }
+
+                p.draw(ctxCoordinated);
+            });
+            
+            // 7. Nächsten Frame anfordern
+            animationFrameId = requestAnimationFrame(animate);
+        }
+
+        // --- Event Listener ---
+
+        const allSliders = [numParticlesSlider, speedSlider, costFullSlider, costReducedSlider, costAnnualSlider, analystRateSlider, structuringRateSlider, highPotentialRateSlider, avgEmployeeCostSlider, maxAnalystContactsSlider];
+
+        allSliders.forEach(slider => {
+            slider.addEventListener('input', updateSliderDisplays);
+            slider.addEventListener('change', () => {
+                // --- ANGEPASSTE LOGIK FÜR INDIVIDUELLEN BUTTON ---
+                Object.values(scenarioButtons).forEach(btn => btn.classList.remove('active'));
+                scenarioButtons.individuell.classList.add('active');
+                startSimulation();
+            });
+        });
+
+        resetButton.addEventListener('click', () => {
+            loadScenario('realistisch');
+        });
+
+        scenarioButtons.konservativ.addEventListener('click', () => loadScenario('konservativ'));
+        scenarioButtons.realistisch.addEventListener('click', () => loadScenario('realistisch'));
+        scenarioButtons.aggressiv.addEventListener('click', () => loadScenario('aggressiv'));
+        // Der "Individuell"-Button hat keinen Click-Listener, er wird nur durch Slider-Änderungen aktiv
+        
+        langBtnDE.addEventListener('click', () => setLanguage('de'));
+        langBtnEN.addEventListener('click', () => setLanguage('en'));
+
+        // --- Theme Toggle ---
+        const themeToggle = document.getElementById('theme-toggle');
+        let currentTheme = localStorage.getItem('theme') || 'light';
+
+        function setTheme(theme) {
+            currentTheme = theme;
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            themeToggle.textContent = theme === 'dark' ? '☀️ Light' : '🌙 Dark';
+
+            // Restart simulation to update canvas colors
+            if (animationFrameId) {
+                startSimulation();
+            }
+        }
+
+        themeToggle.addEventListener('click', () => {
+            setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+        });
+
+        window.addEventListener('load', () => {
+            setTheme(currentTheme); // Set theme before language
+            setLanguage(currentLang);
+            loadScenario('realistisch');
+        });
+        
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(startSimulation, 250);
+        });
+
+    </script>
+</body>
+</html>
